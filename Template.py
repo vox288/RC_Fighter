@@ -28,13 +28,15 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
 
-        # 8 - Do any per frame actions
+    # 8 - Do any per frame actions
 
-        # 9 - Clear the window
-        window.fill(BLACK)
+    # 9 - Clear the window
+    window.fill(BLACK)
 
-        # 11 - Update the window
-        pygame.display.update()
+    # 10 - Draw all window elements
 
-        # 12 - Slow things down a bit Framerate
-        clock.tick(FRAMES_PER_SECOND)
+    # 11 - Update the window
+    pygame.display.update()
+
+    # 12 - Slow things down a bit Framerate
+    clock.tick(FRAMES_PER_SECOND)
