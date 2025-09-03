@@ -24,7 +24,7 @@ while True:
 
     # 7 - Check for and handle events
     for event in pygame.event.get():
-        # Clicked the clode button?
+        # Clicked the close button?
         if event.type == pygame.QUIT:
             sys.exit()
 
