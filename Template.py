@@ -12,7 +12,7 @@ FRAMES_PER_SECOND = 30
 
 # 3 - Initialize the world
 pygame.init()
-window = pygame.display.set_mode((WINDOW_HEIGHT, WINDOW_HEIGHT))
+window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 clock = pygame.time.Clock()
 
 # 4 - Load assets: Images, sounds, etc
