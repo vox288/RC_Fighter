@@ -12,7 +12,14 @@ from .Constants import *
 class EnemyMgr():
     def __init__(self, window:pygame.surface):
         self.window = window
-        self.timer = pyghelpers.Timer(0.1)
+        self.deletion_timer = pyghelpers.Timer(0.1)
+        self.fly_sound_dict = {
+                        "bee":"resource/sounds/Bee/Bee_north.wav",
+                        "dragonfly":"resource/sounds/Dragonfly/Bee_north.wav",
+                        "bat":"resource/sounds/Bat/bat_fly.wav"}
+        self.bee_counter = 0
+        self.dragonfly_counter = 0
+        self.bat_counter = 0
 
     
     def create_enemy(self, enemy_type:str, location:tuple[int,int]):
@@ -32,7 +39,17 @@ class EnemyMgr():
             enemy.update()
             enemy.shoot()
             enemy.special_shoot()
+            if enemy.get_type() == "bee":
+                self.bee_counter += 1
+            if enemy.get_type() == "dragonfly":
+                    self.dragonfly_counter += 1
+            if enemy.get_type() == "bat":
+                self.bat_counter += 1
         self.check_hits()
+        self.play_fly_sound()
+        self.bee_counter = 0
+        self.dragonfly_counter = 0
+        self.bat_counter = 0
 
 
     def check_hits(self):
@@ -40,6 +57,23 @@ class EnemyMgr():
             for projectile in player_projectile_list:
                 if enemy.got_hit(projectile.getRect()):
                     player_projectile_list.remove(projectile)
+
+
+    def play_fly_sound(self):
+            self.enemy_fly_sound("bee", 3, self.bee_counter)
+            self.enemy_fly_sound("dragonfly", 4, self.dragonfly_counter)
+            self.enemy_fly_sound("bat", 5, self.bat_counter)
+
+
+    def enemy_fly_sound(self, type:str, channel:int, counter:int):
+            fly_sound_channel = pygame.mixer.Channel(channel)
+            if counter == 0 or not enemy_list:
+                fly_sound_channel.fadeout(1000)
+                return
+            if fly_sound_channel.get_busy():
+                return
+            fly_sound = pygame.mixer.Sound(self.fly_sound_dict[type])
+            fly_sound_channel.play(fly_sound, 1)
 
 
     def draw(self):
@@ -67,19 +101,15 @@ class Enemy(ABC):
             False, False)
 
         self.explode_sound = pygame.mixer.Sound(self.sound_dict["explode"])
+        self.explode_channel = pygame.mixer.Channel(6)
         self.shoot_sound = pygame.mixer.Sound(self.sound_dict["attack"])
-        self.timer = pyghelpers.Timer(0.4)
+        self.shoot_channel = pygame.mixer.Channel(7)
+        self.deletion_timer = pyghelpers.Timer(0.4)
         self.projectile_manager = ProjectileMgr(self.window)
 
 
     def get_type(self):
         return self.enemy_type
-    
-
-    def play_fly_sound(self, channel):
-        self.fly_sound = pygame.mixer.Sound(self.sound_dict["north"])
-        self.channel = pygame.mixer.Channel(channel)
-        self.channel.play(self.fly_sound, -1)
 
 
     def get_lifes_left(self):
@@ -91,7 +121,7 @@ class Enemy(ABC):
         self.animation.play()
         self.move()
         self.animation.setLoc((self.x, self.y))
-        if self.timer.update():
+        if self.deletion_timer.update():
             enemy_list.remove(self)
 
 
@@ -100,22 +130,23 @@ class Enemy(ABC):
 
 
     def explode(self):
-        self.timer.start()
+        self.deletion_timer.start()
         self.animation.replace("explode")
-        self.explode_sound.play()
-        
+        self.explode_channel.play(self.explode_sound)
+
 
     def got_hit(self, projectile):
         collide_with_target = self.animation.getRect().colliderect(projectile)
         if collide_with_target:
             self.lifes_left -= 1 
-            if self.lifes_left <= 0:
+            if self.lifes_left == 0:
                 self.explode()
             return True
         
 
+    @abstractmethod
     def special_shoot(self):
-        return
+        raise NotImplementedError
     
 
     @abstractmethod
@@ -136,8 +167,7 @@ class Bee(Enemy):
                                    4, 100, 100, 0.1),
                           "explode":("resource/images/Bee/Bee_explode.png",
                                      4, 100, 100, 0.1),}
-        sound_dict = {"north":"resource/sounds/Bee/Bee_north.wav",
-                      "attack":"resource/sounds/Bee/splat2.wav",
+        sound_dict = {"attack":"resource/sounds/Bee/splat2.wav",
                       "explode":"resource/sounds/Bee/slime.mp3"}
         width = 100
         height = 100
@@ -155,14 +185,18 @@ class Bee(Enemy):
 
     def shoot(self): 
         if self.shoot_timer.update():
-            self.shoot_sound.play()
+            self.shoot_channel.play(self.shoot_sound)
             self.projectile_manager.create_projectile(self.enemy_type,
                                         (self.x + (self.width/2),
                                          self.y + self.height),
                                          random.randrange(-2,2))
             self.shoot_timer = pyghelpers.Timer(random.randrange(2, 20) / 10)
             self.shoot_timer.start()
-        
+
+
+    def special_shoot(self):
+        return
+    
 
     def move(self):
         self.movement_frame_counter -= 1
@@ -187,8 +221,7 @@ class Dragonfly(Enemy):
                           "explode" : ("resource/images/Dragonfly/Dragonfly_explode.png",
                                    4, 200, 150, 0.1)}
         
-        sound_dict = {"north" : "resource/sounds/Dragonfly/Bee_north.wav",
-                      "explode" : "resource/sounds/Dragonfly/space_insect.mp3",
+        sound_dict = {"explode" : "resource/sounds/Dragonfly/space_insect.mp3",
                       "attack" : "resource/sounds/Dragonfly/splat.wav"}
         width = 200
         height = 150
@@ -206,13 +239,18 @@ class Dragonfly(Enemy):
         
     def shoot(self):
         if self.shoot_timer.update():
-            self.shoot_sound.play()
+            self.shoot_channel.play(self.shoot_sound)
             self.projectile_manager.create_projectile(self.enemy_type,
                                         (self.x + (self.width/2),
                                          self.y + self.height))
             self.shoot_timer = pyghelpers.Timer(random.randrange(2, 20) / 10)
             self.shoot_timer.start()
+
+
+    def special_shoot(self):
+        return
     
+
     def move(self):
         self.movement_frame_counter -= 1
         self.x += self.speed_x
@@ -232,14 +270,14 @@ class Bat(Enemy):
     def __init__(self, window:pygame.surface, location:tuple[int,int]):
 
         enemy_type = "bat"
-        animation_dict = {"north":("resource/images/bat/bat_sprite.png",
+        animation_dict = {"north":("resource/images/Bat/bat_sprite.png",
                                    4, 350, 200, 0.1),
-                          "explode":("resource/images/bat/bat_explode.png",
+                          "explode":("resource/images/Bat/bat_explode.png",
                                      8, 350, 200, 0.1),}
-        sound_dict = {"north":"resource/sounds/bat/bat_fly.wav",
-                      "attack":"resource/sounds/bat/bat_attack2.wav",
-                      "attack_2":"resource/sounds/bat/bat_attack1.wav",
-                      "explode":"resource/sounds/bat/bat_explode.wav"}
+        sound_dict = {"attack":"resource/sounds/Bat/bat_attack2.wav",
+                      "attack_2":"resource/sounds/Bat/bat_attack1.wav",
+                      "explode":"resource/sounds/Bat/bat_explode.wav",
+                      "spawn":"resource/sounds/Bat/bat_spawn.wav"}
         width = 350
         height = 200
         lifes_left = 30
@@ -248,18 +286,19 @@ class Bat(Enemy):
                         sound_dict, width, height, lifes_left)
         
         self.movement_frame_counter = random.randrange(5, 30)
-        self.speed_y = 1
-        self.speed_x = random.randrange(-10, 10)
+        self.speed_y = random.randrange(-5, 5)
+        self.speed_x = random.randrange(-15, 15)
         self.shoot_timer = pyghelpers.Timer(random.randrange(2, 20) / 10)
         self.shoot_timer.start()
         self.special_shoot_timer = pyghelpers.Timer(random.randrange(20,60) / 10)
         self.special_shoot_timer.start()
         self.special_shoot_sound = pygame.mixer.Sound(self.sound_dict["attack_2"])
-
+        self.spawn_sound = pygame.mixer.Sound(self.sound_dict["spawn"])
+        self.shoot_channel.play(self.spawn_sound)
 
     def shoot(self): 
         if self.shoot_timer.update():
-            self.shoot_sound.play()
+            self.shoot_channel.play(self.shoot_sound)
             self.projectile_manager.create_projectile(self.enemy_type,
                                         (self.x + (self.width/2),
                                          self.y + self.height))
@@ -269,7 +308,7 @@ class Bat(Enemy):
         
     def special_shoot(self):
         if self.special_shoot_timer.update():
-            self.special_shoot_sound.play()
+            self.shoot_channel.play(self.special_shoot_sound)
             for pixel in range(-20, 21, 10):  # Range used to create 5 spreading projectiles
                 self.projectile_manager.create_projectile("dragonfly",
                                         (self.x + (self.width/2),

@@ -83,7 +83,7 @@ class PlayerProjectile(Projectile):
                  side_movement:int=0):
 
         self.animation_dict = {"projectile": 
-                        ("resource/images/projectile/Projectile_fly3.png",
+                        ("resource/images/Projectile/fighter_projectile.png",
                          3, 9, 20, 0.1)}
         self.speed = 17
 
@@ -106,7 +106,7 @@ class BeeProjectile(Projectile):
                  side_movement:int=0):
 
         self.animation_dict = {"projectile":
-                ("resource/images/enemy_projectiles/Bee_projectile.png",
+                ("resource/images/Enemy_projectiles/Bee_projectile.png",
                 3, 9, 20, 0.1)}
         self.speed = 6
 
@@ -128,7 +128,7 @@ class DragonflyProjectile(Projectile):
                  side_movement:int=0):
 
         self.animation_dict = {"projectile":
-                ("resource/images/enemy_projectiles/Dragonfly_projectile.png",
+                ("resource/images/Enemy_projectiles/Dragonfly_projectile.png",
                  3, 15, 30, 0.1)}
         self.speed = 12
 
@@ -150,7 +150,7 @@ class BatProjectile(Projectile):
                  side_movement:int=0):
 
         self.animation_dict = {"projectile" : 
-                ("resource/images/enemy_projectiles/Bat_projectile.png",
+                ("resource/images/Enemy_projectiles/Bat_projectile.png",
                  3, 50, 50, 0.1)}
         self.speed = 10
 

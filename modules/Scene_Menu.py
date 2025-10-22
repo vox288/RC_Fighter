@@ -23,14 +23,15 @@ class MenuScene(pyghelpers.Scene):
         self.start_button = pygwidgets.TextButton(self.window, (550, 500),
                                                   "Start Game", 100)
         
-        pygame.mixer.music.load("resource/sounds/background.mp3")
-        pygame.mixer.music.play(-1)
+        pygame.mixer.music.load("resource/sounds/background.wav")
 
 
     def handleInputs(self, events, keyPressedList):
         for event in events:
             if self.start_button.handleEvent(event):
+                pygame.mixer.Sound("resource/sounds/button.wav").play()
                 self.goToScene(PLAY_SCENE)
+                
                 
             if self.quit_button.handleEvent(event):
                 sys.exit()
@@ -47,6 +48,9 @@ class MenuScene(pyghelpers.Scene):
 
     def update(self):
         self.background_animation.update()
+        if pygame.mixer.music.get_busy():
+            return
+        pygame.mixer.music.play(-1)
 
         
     def getSceneKey(self):

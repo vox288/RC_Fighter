@@ -13,11 +13,15 @@ from .Constants import *
 class PlayScene(pyghelpers.Scene):
 
     animation_dict = {"normal":("resource/images/play_background.png",
-                                40, 1024, 680, 0.1),
+                                40, 1024, 680, 0.05),
                       "dark":("resource/images/play_background_dark.png",
-                                40, 1024, 680, 0.1),
+                                40, 1024, 680, 0.05),
+                      "light":("resource/images/play_background_light.png",
+                                40, 1024, 680, 0.05),
                       "transition" : ("resource/images/transition.png",
-                                40, 1024, 680, 0.03)}
+                                40, 1024, 680, 0.05),
+                      "transition_2":("resource/images/transition_2.png",
+                                40, 1024, 680, 0.05)}
 
     def __init__(self, window:pygame.surface):
         self.window = window
@@ -31,20 +35,27 @@ class PlayScene(pyghelpers.Scene):
         self.projectile_manager = ProjectileMgr(self.window)
         self.lifes_title = pygwidgets.DisplayText(self.window, (10, 300),
                                                   "Lifes Left :",
-                                                  textColor=WHITE)
+                                                  fontSize=25,
+                                                  textColor=RED)
         self.lifes_display = pygwidgets.DisplayText(self.window,
                                                     (10, WINDOW_HEIGHT/2),
                                                     self.player.get_lifes(),
-                                                    fontSize=46,
-                                                    textColor=WHITE)
+                                                    fontSize=50,
+                                                    textColor=RED)
         self.gameover_display = pygwidgets.DisplayText(self.window,
                                                        (90, 200), "GAME OVER",
                                                        fontSize=200, 
-                                                       textColor=WHITE)
-        self.gameover_hint = pygwidgets.DisplayText(self.window, (350, 350),
-                                        "Press Mousebutton to return to the Menu",
-                                        fontSize=22, textColor=WHITE)
-        self.enemy_row = 0
+                                                       textColor=RED)
+        self.display_hint = pygwidgets.DisplayText(self.window, (350, 350),
+                                    "Press Mousebutton to return to the Menu",
+                                    fontSize=22, textColor=RED)
+        self.win_display = pygwidgets.DisplayText(self.window,
+                                                      (150, 200), "You Win !!!",
+                                                      fontSize=200,
+                                                      textColor=RED)
+        self.shots_fired_hint = pygwidgets.DisplayText(self.window, (350, 400),
+                        "", fontSize=22, textColor=RED)
+        self.game_row = 0
     
 
         self.timer = pyghelpers.Timer(1.5)
@@ -54,11 +65,12 @@ class PlayScene(pyghelpers.Scene):
 
     def reset(self):
         self.gameover_display.hide()
-        self.gameover_hint.hide()
-        self.enemy_row = 0
+        self.display_hint.hide()
+        self.win_display.hide()
+        self.shots_fired_hint.hide()
+        self.game_row = 0
         enemy_projectile_list.clear()
         player_projectile_list.clear()
-        enemy_list.clear()
         self.background_animation.replace("normal")
         self.timer.start()
         self.player = Player(self.window, (450, 570))
@@ -67,14 +79,20 @@ class PlayScene(pyghelpers.Scene):
     def handleInputs(self, events, keyPressedList):
         for event in events:
            if event.type == pygame.MOUSEBUTTONDOWN:
-                self.player.handleEvent(event)
                 if self.player.get_lifes() <= 0:
+                    pygame.mixer.Sound("resource/sounds/button.wav").play()
+                    enemy_list.clear()
                     self.endgame_timer.start()
+                elif self.game_row >= 12:
+                    pygame.mixer.Sound("resource/sounds/button.wav").play()
+                    self.endgame_timer.start()
+                else:
+                    self.player.handleEvent(event)
 
 
     def check_enemy_list(self):
         if len(enemy_list) <= 0:
-            self.enemy_row += 1
+            self.game_row += 1
             self.timer.start()
         return
 
@@ -90,8 +108,16 @@ class PlayScene(pyghelpers.Scene):
         if self.player.get_lifes() <= 0:
             self.gameover_display.show()
             self.gameover_display.draw()
-            self.gameover_hint.show()
-            self.gameover_hint.draw()
+            self.display_hint.show()
+            self.display_hint.draw()
+        elif self.game_row >= 12:
+            enemy_projectile_list.clear()
+            self.win_display.show()
+            self.win_display.draw()
+            self.display_hint.show()
+            self.display_hint.draw()
+            self.shots_fired_hint.show()
+            self.shots_fired_hint.draw()
 
 
     def update(self):
@@ -100,55 +126,84 @@ class PlayScene(pyghelpers.Scene):
         self.player.update()
         self.enemy_manager.update()
         self.projectile_manager.update()
+        self.shots_fired_hint.setValue(
+            f"It took you {self.player.get_shots_fired()} shots")
         self.lifes_display.setValue(self.player.get_lifes())
-        if self.endgame_timer.update():
-            self.goToScene(MENU_SCENE)
-            self.reset()
+        print(self.game_row)
 
-        if self.enemy_row == 0:
+        if self.endgame_timer.update():
+            pygame.mixer.stop()
+            self.reset()
+            self.goToScene(MENU_SCENE)
+            pygame.mixer.music.unload()
+            pygame.mixer.music.load("resource/sounds/background.wav")
+
+        if self.game_row == 0:
             if self.timer.update():
                 self.first_row()
 
-        if self.enemy_row == 1:
+        if self.game_row == 1:
             self.check_enemy_list()
                
-        if self.enemy_row == 2:
+        if self.game_row == 2:
             if self.timer.update():
                 self.second_row()
 
-        if self.enemy_row == 3:
+        if self.game_row == 3:
             self.check_enemy_list()
 
-        if self.enemy_row == 4:
+        if self.game_row == 4:
             if self.timer.update():
                 self.third_row()
         
-        if self.enemy_row == 5:
+        if self.game_row == 5:
             self.check_enemy_list()
 
-        if self.enemy_row == 6:
+        if self.game_row == 6:
             if self.timer.update():
                 self.fourth_row()
 
-        if self.enemy_row == 7:
+        if self.game_row == 7:
             self.check_enemy_list()
 
-        if self.enemy_row == 8:
-            self.background_animation.replace("transition")
-            self.timer.start(1.2)
-            self.enemy_row += 1
+        if self.game_row == 8:
+            if self.timer.update():
+                self.background_animation.replace("transition") 
+                self.timer.start(2)
+                self.game_row += 1
         
-        if self.enemy_row == 9:
+        if self.game_row == 9:
             if self.timer.update():
                 self.background_animation.replace("dark")
-                self.timer.start(3)
-                self.enemy_row += 1
+                self.timer.start(2)
+                self.game_row += 1
         
-        if self.enemy_row == 10:
+        if self.game_row == 10:
             if self.timer.update():
                 self.boss_row()
+                self.game_row += 1
+        
+        if self.game_row == 11:
+            self.check_enemy_list()
 
-                       
+
+        if self.game_row == 12:
+            if self.timer.update():
+                self.background_animation.replace("transition_2")
+                pygame.mixer.music.unload()
+                pygame.mixer.music.load("resource/sounds/winner.wav")
+                self.timer.start(2)
+                self.game_row += 1
+        
+        if self.game_row == 13:
+            if self.timer.update():
+                self.background_animation.replace("light")
+
+        if pygame.mixer.music.get_busy():
+            return
+        pygame.mixer.music.play(-1)
+
+              
     def getSceneKey(self):
         return PLAY_SCENE
     
@@ -157,7 +212,7 @@ class PlayScene(pyghelpers.Scene):
         for _ in range(3):
             self.enemy_manager.create_enemy("bee", (random.randrange(50,800),
                       random.randrange(50,300)))
-        self.enemy_row += 1
+        self.game_row += 1
             
 
     def second_row(self):
@@ -167,7 +222,7 @@ class PlayScene(pyghelpers.Scene):
         for _ in range(1):
             self.enemy_manager.create_enemy("dragonfly", 
                       (random.randrange(50, 800), random.randrange(50, 300)))
-        self.enemy_row += 1
+        self.game_row += 1
 
 
     def third_row(self):
@@ -177,16 +232,19 @@ class PlayScene(pyghelpers.Scene):
         for _ in range(5):
             self.enemy_manager.create_enemy("dragonfly", 
                       (random.randrange(50, 800), random.randrange(50, 300)))
-        self.enemy_row += 1
+        self.game_row += 1
 
 
     def fourth_row(self):
         for _ in range(10):
             self.enemy_manager.create_enemy("dragonfly", 
                       (random.randrange(50, 800), random.randrange(50, 300)))
-        self.enemy_row += 1
+        self.game_row += 1
 
 
     def boss_row(self):
-        self.enemy_manager.create_enemy("bat", (350, 150))
+        self.enemy_manager.create_enemy("bat", (350, 100))
+        pygame.mixer.music.unload()
+        pygame.mixer.music.load("resource/sounds/bossfight.wav")
+
         

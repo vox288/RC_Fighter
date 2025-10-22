@@ -9,45 +9,47 @@ from .Constants import *
 
 
 class Player():
-    animation_dict:dict = {"north":("resource/images/fighter/Fighter_straight_sheet.png",
+    animation_dict:dict = {"north":("resource/images/Fighter/Fighter_straight_sheet.png",
                                  2, 100, 100, 0.1),
-                      "west":("resource/images/fighter/Fighter_left-sheet.png",
+                      "west":("resource/images/Fighter/Fighter_left-sheet.png",
                               2, 100, 100, 0.1),
-                      "east":("resource/images/fighter/Fighter_right-sheet.png",
+                      "east":("resource/images/Fighter/Fighter_right-sheet.png",
                                2, 100, 100, 0.1),
-                      "north_attack":("resource/images/fighter/Fighter_straight_fire-sheet.png",
+                      "north_attack":("resource/images/Fighter/Fighter_straight_fire-sheet.png",
                                         3, 100, 100, 0.1),
-                      "west_attack":("resource/images/fighter/Fighter_left_fire-sheet.png",
+                      "west_attack":("resource/images/Fighter/Fighter_left_fire-sheet.png",
                                      3, 100, 100, 0.1),
-                      "east_attack":("resource/images/fighter/Fighter_right_fire-sheet.png",
+                      "east_attack":("resource/images/Fighter/Fighter_right_fire-sheet.png",
                                       3, 100, 100, 0.1),
-                      "explode":("resource/images/fighter/Fighter_straight_explode1-sheet.png",
-                                 5, 100, 100, 0.1),
-                      "projectile":("resource/images/projectile/Projectile_fly3.png",
-                                  3, 9, 20, 0.1 )}
+                      "explode":("resource/images/Fighter/Fighter_straight_explode1-sheet.png",
+                                 5, 100, 100, 0.1)}
 
-    sound_dict:dict = {"north":"resource/sounds/fighter/fly_streight.wav",
-                      "west":"resource/sounds/fighter/fly_left.wav",
-                      "east":"resource/sounds/fighter/fly_right.wav",
-                      "attack":"resource/sounds/fighter/gun_sound.mp3",
-                      "got_hit":"resource/sounds/fighter/fighter_got_hit.wav",
-                      "explode":"resource/sounds/fighter/fighter_explosion.mp3"}
+    sound_dict:dict = {"north":"resource/sounds/Fighter/fly_streight.wav",
+                      "west":"resource/sounds/Fighter/fly_left.wav",
+                      "east":"resource/sounds/Fighter/fly_right.wav",
+                      "attack":"resource/sounds/Fighter/gun_sound.mp3",
+                      "got_hit":"resource/sounds/Fighter/fighter_got_hit.wav",
+                      "explode":"resource/sounds/Fighter/fighter_explosion.mp3"}
 
     def __init__(self, window:pygame.surface, location:tuple[int,int]):
         self.window = window
         self.x, self.y = location
         self.lifes_left = 5
         self.speed = 15
+        self.shots_fired = 0
 
         self.animation = pygwidgets.SpriteSheetAnimationCollection(
             self.window, (self.x, self.y), Player.animation_dict, "north",
             False, False, False)
         
-        self.shoot_sound = pygame.mixer.Sound(Player.sound_dict["attack"])
-        self.explode_sound = pygame.mixer.Sound(Player.sound_dict["explode"])
-        self.got_hit_sound = pygame.mixer.Sound(Player.sound_dict["got_hit"])
-        self.fly_sound = pygame.mixer.Sound(Player.sound_dict["north"])
-        self.channel_2 = pygame.mixer.Channel(2)
+        self.player_fly_sound = pygame.mixer.Sound(Player.sound_dict["north"])
+        self.player_shoot_sound = pygame.mixer.Sound(Player.sound_dict["attack"])
+        self.player_explode_sound = pygame.mixer.Sound(Player.sound_dict["explode"])
+        self.player_got_hit_sound = pygame.mixer.Sound(Player.sound_dict["got_hit"])
+        self.player_channel_fly = pygame.mixer.Channel(0)
+        self.player_channel_shoot = pygame.mixer.Channel(1)
+        self.player_channel_explode = pygame.mixer.Channel(1)
+        self.player_channel_got_hit = pygame.mixer.Channel(2)
 
         self.rect = pygame.Rect(self.x, self.y, 100, 100)
         self.mouse_button_pressed = False
@@ -58,10 +60,14 @@ class Player():
     def get_lifes(self):
         return self.lifes_left
     
+    
+    def get_shots_fired(self):
+        return self.shots_fired
+    
 
     def explode(self): 
-        self.explode_sound.play()
-        self.channel_2.stop()
+        self.player_channel_explode.play(self.player_explode_sound)
+        self.player_channel_fly.stop()
         self.animation.replace("explode")
         
 
@@ -69,7 +75,7 @@ class Player():
         collide_with_player = self.animation.getRect().colliderect(projectile)
         if collide_with_player:
             enemy_projectile_list.remove(projectile)
-            self.got_hit_sound.play()
+            self.player_channel_got_hit.play(self.player_got_hit_sound)
             self.lifes_left -= 1 
             if self.lifes_left == 0:
                 self.explode()
@@ -79,7 +85,8 @@ class Player():
 
 
     def shoot(self):
-        self.shoot_sound.play()
+        self.shots_fired += 1
+        self.player_channel_shoot.play(self.player_shoot_sound)
         self.projectile_manager = ProjectileMgr(self.window)
         if self.flying_state == "east":
             self.projectile_manager.create_projectile("player",
@@ -92,7 +99,7 @@ class Player():
         else:
             self.projectile_manager.create_projectile("player",
                                                       (self.x + 43, self.y))
-        self.shot_fired = True
+
 
 
     def handleEvent(self, event):
@@ -166,7 +173,6 @@ class Player():
     def flying_state_switch(self, state:str):
         if self.flying_state == state:
             return
-        self.fly_sound = pygame.mixer.Sound(Player.sound_dict[state])
-        self.channel_2.play(self.fly_sound, -1)
+        self.player_fly_sound = pygame.mixer.Sound(Player.sound_dict[state])
+        self.player_channel_fly.play(self.player_fly_sound, -1)
         self.flying_state = state
-        print(self.flying_state)
