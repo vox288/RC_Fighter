@@ -85,7 +85,7 @@ class PlayerProjectile(Projectile):
         self.animation_dict = {"projectile": 
                         (resolve_path("resource/images/Projectile/fighter_projectile.png"),
                          3, 9, 20, 0.1)}
-        self.speed = 17
+        self.speed = 18
 
         super().__init__(window, location, self.animation_dict, side_movement)
     
@@ -108,7 +108,7 @@ class BeeProjectile(Projectile):
         self.animation_dict = {"projectile":
                 (resolve_path("resource/images/Enemy_projectiles/Bee_projectile.png"),
                 3, 9, 20, 0.1)}
-        self.speed = 6
+        self.speed = 8
 
         super().__init__(window, location, self.animation_dict, side_movement)
     

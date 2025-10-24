@@ -95,11 +95,11 @@ class Player():
         if self.flying_state == "east":
             self.projectile_manager.create_projectile("player",
                                                       (self.x + 43, self.y),
-                                                      4)
+                                                      5)
         elif self.flying_state == "west":
             self.projectile_manager.create_projectile("player",
                                                       (self.x + 43, self.y),
-                                                      -4)
+                                                      -5)
         else:
             self.projectile_manager.create_projectile("player",
                                                       (self.x + 43, self.y))
