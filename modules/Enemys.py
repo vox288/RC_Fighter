@@ -217,7 +217,7 @@ class Bee(Enemy):
         if self.x < 0 or self.x > WINDOW_WIDTH - self.width:
             self.speed_x = -self.speed_x
         if self.y < 0 or self.y > WINDOW_HEIGHT - (self.height*3):
-            self.speed_y = - self.speed_y
+            self.speed_y = -self.speed_y
         
 
 
@@ -270,7 +270,7 @@ class Dragonfly(Enemy):
         if self.x < 0 or self.x > WINDOW_WIDTH - self.width:
             self.speed_x = -self.speed_x
         if self.y < 0 or self.y > WINDOW_HEIGHT - (self.height*3):
-            self.speed_y = - self.speed_y
+            self.speed_y = -self.speed_y
 
 
 
@@ -288,7 +288,7 @@ class Bat(Enemy):
                       "spawn":resolve_path("resource/sounds/Bat/bat_spawn.wav")}
         width = 350
         height = 200
-        lifes_left = 50
+        lifes_left = 60
 
         super().__init__(window, location, enemy_type, animation_dict,
                         sound_dict, width, height, lifes_left)
@@ -338,4 +338,4 @@ class Bat(Enemy):
         if self.x < 0 or self.x > WINDOW_WIDTH - self.width:
             self.speed_x = -self.speed_x
         if self.y < 0 or self.y > WINDOW_HEIGHT - (self.height*3):
-            self.speed_y = - self.speed_y
+            self.speed_y = -self.speed_y
